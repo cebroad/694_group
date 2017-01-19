@@ -89,15 +89,16 @@ def importAndConvert(file_name, conv_function, schema_name, ):
 
     # Step 4: Create DataFrame with Schema
     data_DF = sqlContext.createDataFrame(data_RDD, schema_name)
+    data_DF_filter = data_DF.where("""start_station != '' and end_station != '' and sub_type != '' and zip != '' """)
     print "Step 4 complete"
 
     # Check: Print Schema
-    data_DF.printSchema()
+    data_DF_filter.printSchema()
 
     # Check: Print First 20 Rows of Data Frame
-    data_DF.show()
+    data_DF_filter.show()
 
-    return data_DF
+    return data_DF_filter
 
 
 def stackData(prefix):
