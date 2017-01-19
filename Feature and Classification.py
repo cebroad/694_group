@@ -137,32 +137,24 @@ print "Full 12 MOnths Dataset Count: ", trip_12mos.count()
 #trip_201402_DF.show()
 trip_12mos.show()
 
-#Number of rides per user
+# Feature: Number of rides per user
 trips_WithRideDuration = trip_12mos.withColumn('duration',datediff('end_date','start_date'))#.sort('duration', ascending = 0)
 
-trips_WithRideDuration.take(5)
+#trips_WithRideDuration.take(5)
 
-def indexStringColumns(df, cols):
-    from pyspark.ml.feature import StringIndexer
-    #variable newdf will be updated several times
-    newdf = df
-    for c in cols:
-        si = StringIndexer(inputCol=c, outputCol=c+"-num")
-        sm = si.fit(newdf)
-        newdf = sm.transform(newdf).drop(c)
-        newdf = newdf.withColumnRenamed(c+"-num", c)
-    return newdf
-
-trip_numeric = indexStringColumns(trips_WithRideDuration, ["sub_type", "start_station", "end_station"])
-trip_numeric.show()
+#Convert strings to numeric values for evaluation (i.e. "Subscriber" = 1, "Customer" = 0)
+trip_numeric = indexStringColumns(trips_WithRideDuration, ["sub_type", "start_station", "end_station", 
+                                                           "zip"])
+trip_numeric = trip_numeric.drop("start_date", "end_date") #Can add these back in after one-hot encoding them
+#trip_numeric.show()
 
 
 # Create feature vector
 
-input_cols=["trip_id","duration","start_date","start_terminal",
-            "end_date","end_terminal","bike_no","zip", "start_station", "end_station"]
+input_cols=["duration", "start_terminal"]
 va = VectorAssembler(outputCol="features", inputCols=input_cols)
 trip_points = va.transform(trip_numeric).select("features", "sub_type").withColumnRenamed("sub_type", "label")
+
 
 # Create Training and Test data.
 triptsets = trip_points.randomSplit([0.8, 0.2])
@@ -198,5 +190,5 @@ dtmm.precision()
 lr = LogisticRegression(maxIter=10, regParam=0.3, elasticNetParam=0.8)
 lrModel = lr.fit(trip_train)
 
-validpredicts = lrmodel.transform(trip_valid)
+validpredicts = lrModel.transform(trip_valid)
 validpredicts.show()
