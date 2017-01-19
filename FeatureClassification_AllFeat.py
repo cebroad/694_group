@@ -214,7 +214,7 @@ trip_numeric = indexStringColumns(trip_12mos_full, ["sub_type", "start_station",
 # trip_numeric = trip_numeric.drop("start_date", "end_date")  # Can add these back in after one-hot encoding them
 # trip_numeric.show()
 
-input_cols=["duration","round_trip","average","start_day","start_dow"] #add other features here
+input_cols=["start_station","end_station","zip","duration","round_trip","average","start_day","start_dow"] #add other features here
 
 def oneHotEncodeColumns(df, cols):
     newdf = df
