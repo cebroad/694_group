@@ -114,10 +114,8 @@ def convTripString(r):
     ,toIntSafe(r[7])
     ,toIntSafe(r[8])
     ,r[9]
-    ,toIntSafe(r[10])
+    ,r[10]
     )
-
-
 
 # -------------------------------------- #
 # SCHEMA DEFINITIONS
@@ -172,7 +170,7 @@ tripSchema = StructType([
   StructField("end_terminal", IntegerType(), True),
   StructField("bike_no", IntegerType(), True),
   StructField("sub_type", StringType(), True),
-  StructField("zip", IntegerType(), True)
+  StructField("zip", StringType(), True)
   ])
   
 # ---------------------------------------------------- #
