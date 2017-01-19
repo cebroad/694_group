@@ -11,6 +11,7 @@ from pyspark.ml.classification import LogisticRegression
 from pyspark.mllib.evaluation import MulticlassMetrics
 from pyspark.ml.classification import DecisionTreeClassifier
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+from pyspark.ml.feature import OneHotEncoder
 
 
 # Definitions
@@ -209,15 +210,26 @@ trip_12mos_full = trip_12mos_step4
 
 # Convert strings to numeric values for evaluation (i.e. "Subscriber" = 1, "Customer" = 0)
 trip_numeric = indexStringColumns(trip_12mos_full, ["sub_type", "start_station", "end_station",
-                                                    "zip","start_dow"])
+                                                    "zip","duration","round_trip","average","start_day","start_dow"])
 # trip_numeric = trip_numeric.drop("start_date", "end_date")  # Can add these back in after one-hot encoding them
 # trip_numeric.show()
 
+input_cols=["duration","round_trip","average","start_day","start_dow"] #add other features here
+
+def oneHotEncodeColumns(df, cols):
+    newdf = df
+    for c in cols:
+        onehotenc = OneHotEncoder(inputCol=c, outputCol=c+"-onehot", dropLast=False)
+        newdf = onehotenc.transform(newdf).drop(c)
+        newdf = newdf.withColumnRenamed(c+"-onehot", c)
+    return newdf
+
+trip_hot = oneHotEncodeColumns(trip_numeric, input_cols)
 
 # Create feature vector
-input_cols=["duration","round_trip","average","start_day","start_dow"] #add other features here
+
 va = VectorAssembler(outputCol="features", inputCols=input_cols)
-trip_points = va.transform(trip_numeric).select("features", "sub_type").withColumnRenamed("sub_type", "label")
+trip_points = va.transform(trip_hot).select("features", "sub_type").withColumnRenamed("sub_type", "label")
 # Create Training and Test data.
 triptsets = trip_points.randomSplit([0.8, 0.2])
 trip_train = triptsets[0].cache()
