@@ -209,7 +209,7 @@ trip_12mos_full = trip_12mos_step4
 
 # Convert strings to numeric values for evaluation (i.e. "Subscriber" = 1, "Customer" = 0)
 trip_numeric = indexStringColumns(trip_12mos_full, ["sub_type", "start_station", "end_station",
-                                                    "zip"])
+                                                    "zip","start_dow"])
 # trip_numeric = trip_numeric.drop("start_date", "end_date")  # Can add these back in after one-hot encoding them
 # trip_numeric.show()
 
