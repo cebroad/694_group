@@ -205,52 +205,30 @@ trip_12mos_step4 = trip_12mos_step3.join(station_df2, station_df2.start_station 
 
 trip_12mos_full = trip_12mos_step4
 
-trip_12mos_full.take(5)
+# trip_12mos_full.take(5)
 
 # Convert strings to numeric values for evaluation (i.e. "Subscriber" = 1, "Customer" = 0)
 trip_numeric = indexStringColumns(trip_12mos_full, ["sub_type", "start_station", "end_station",
                                                     "zip"])
-trip_numeric = trip_numeric.drop("start_date", "end_date")  # Can add these back in after one-hot encoding them
+# trip_numeric = trip_numeric.drop("start_date", "end_date")  # Can add these back in after one-hot encoding them
 # trip_numeric.show()
 
 
 # Create feature vector
-
-input_cols = ["duration", "start_terminal"]
+input_cols=["duration","round_trip","average","start_day","start_dow"] #add other features here
 va = VectorAssembler(outputCol="features", inputCols=input_cols)
 trip_points = va.transform(trip_numeric).select("features", "sub_type").withColumnRenamed("sub_type", "label")
-
 # Create Training and Test data.
 triptsets = trip_points.randomSplit([0.8, 0.2])
 trip_train = triptsets[0].cache()
 trip_valid = triptsets[1].cache()
-
-# Random Forest
-rf = RandomForestClassifier(maxDepth=10)
-rfmodel = rf.fit(trip_train)
-
-rfpredicts = rfmodel.transform(trip_valid)
-rfresrdd = rfpredicts.select("prediction", "label").rdd
-rfmm = MulticlassMetrics(rfresrdd)
-rfmm.precision()
-
-# Decision Tree
-dt = DecisionTreeClassifier(maxDepth=20)
-dtmodel = dt.fit(trip_train)
-
-dtpredicts = dtmodel.transform(trip_valid)
-
-evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="accuracy")
-accuracy = evaluator.evaluate(dtpredicts)
-print("Test Error = %g" % (1.0 - accuracy))
-
-dtresrdd = dtpredicts.select("prediction", "label").rdd  # convert DataFrame to RDD.
-dtmm = MulticlassMetrics(dtresrdd)
-dtmm.precision()
-
-# Logistic Regression
 lr = LogisticRegression(maxIter=10, regParam=0.3, elasticNetParam=0.8)
 lrModel = lr.fit(trip_train)
-
 validpredicts = lrModel.transform(trip_valid)
 validpredicts.show()
+log_rdd = validpredicts.select("prediction", "label").rdd
+log_mm = MulticlassMetrics(log_rdd)
+log_mm.precision()
+evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="accuracy")
+accuracy = evaluator.evaluate(validpredicts)
+print accuracy
